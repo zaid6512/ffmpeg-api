@@ -1,3 +1,7 @@
+@app.route('/')
+def home():
+    return jsonify({"status": "ok"})
+
 # D:\ffmpeg-api\server.py
 from flask import Flask, request, send_file, jsonify
 import subprocess, tempfile, requests, os
