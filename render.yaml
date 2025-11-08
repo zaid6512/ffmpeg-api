@@ -1,9 +1,7 @@
 services:
   - type: web
     name: ffmpeg-api
-    env: python
-    buildCommand: |
-      apt-get update && apt-get install -y ffmpeg
-      pip install -r requirements.txt
-    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    env: docker
     plan: free
+    autoDeploy: true
+
