@@ -60,3 +60,11 @@ def trim():
         return jsonify({"error": "Download failed", "details": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "Unexpected error", "details": str(e)}), 500
+@app.route('/check_ffmpeg')
+def check_ffmpeg():
+    try:
+        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
+        return jsonify({"ok": True, "output": result.stdout.split("\n")[0]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
