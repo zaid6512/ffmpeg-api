@@ -19,5 +19,6 @@ EXPOSE 10000
 
 # Start the app
 # Use gunicorn with a 5-minute timeout and single worker
-CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:10000", "--timeout", "300", "--workers", "1"]
+CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:7860", "--timeout", "300", "--workers", "1"]
+
 
