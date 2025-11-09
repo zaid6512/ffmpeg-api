@@ -22,3 +22,4 @@ EXPOSE 10000
 CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:7860", "--timeout", "300", "--workers", "1"]
 
 
+

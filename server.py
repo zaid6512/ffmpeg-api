@@ -112,7 +112,7 @@ def check_ffmpeg():
 # -----------------------------
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
-    print(f"[DEBUG] Starting Flask app on port {port}", flush=True)
     app.run(host='0.0.0.0', port=port)
+
 
 
