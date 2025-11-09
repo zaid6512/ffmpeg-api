@@ -2,11 +2,13 @@
 from flask import Flask, request, send_file, jsonify
 import subprocess, tempfile, requests, os
 
-# Initialize Flask app FIRST
+# -----------------------------
+# Initialize Flask app
+# -----------------------------
 app = Flask(__name__)
 
 # -----------------------------
-# Root route for Render health check
+# Root route (for Render health check)
 # -----------------------------
 @app.route('/')
 def home():
@@ -30,11 +32,16 @@ def trim():
                 "error": "video_url, start, and duration (or end) required"
             }), 400
 
+        print(f"[DEBUG] Downloading video from: {url}", flush=True)
+
         # Create temporary files
         tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
         tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
         tmp_in.close()
         tmp_out.close()
+
+        print(f"[DEBUG] Temp input file: {tmp_in.name}")
+        print(f"[DEBUG] Temp output file: {tmp_out.name}")
 
         # Download input video
         r = requests.get(url, stream=True, timeout=120)
@@ -43,6 +50,8 @@ def trim():
             for chunk in r.iter_content(chunk_size=1024 * 1024):
                 if chunk:
                     f.write(chunk)
+
+        print("[DEBUG] Download complete. Running FFmpeg...", flush=True)
 
         # Run FFmpeg trim (fast copy)
         cmd = [
@@ -56,16 +65,33 @@ def trim():
             "-c", "copy",
             tmp_out.name,
         ]
-        subprocess.run(cmd, check=True)
 
-        # Return trimmed file
+        print(f"[DEBUG] Running command: {' '.join(cmd)}", flush=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        print(f"[DEBUG] FFmpeg return code: {result.returncode}")
+        if result.stderr:
+            print(f"[DEBUG] FFmpeg stderr: {result.stderr}", flush=True)
+        if result.stdout:
+            print(f"[DEBUG] FFmpeg stdout: {result.stdout}", flush=True)
+
+        if result.returncode != 0:
+            return jsonify({
+                "error": "FFmpeg failed",
+                "stderr": result.stderr
+            }), 500
+
+        print("[DEBUG] FFmpeg succeeded. Sending file to user...", flush=True)
         return send_file(tmp_out.name, as_attachment=True, download_name="clip.mp4")
 
-    except subprocess.CalledProcessError as e:
-        return jsonify({"error": "FFmpeg failed", "details": str(e)}), 500
     except requests.RequestException as e:
+        print(f"[DEBUG] Download error: {str(e)}", flush=True)
         return jsonify({"error": "Download failed", "details": str(e)}), 500
+    except subprocess.CalledProcessError as e:
+        print(f"[DEBUG] FFmpeg error: {str(e)}", flush=True)
+        return jsonify({"error": "FFmpeg failed", "details": str(e)}), 500
     except Exception as e:
+        print(f"[DEBUG] Unexpected error: {str(e)}", flush=True)
         return jsonify({"error": "Unexpected error", "details": str(e)}), 500
 
 
@@ -82,10 +108,11 @@ def check_ffmpeg():
 
 
 # -----------------------------
-# Local run (for debugging)
+# Local run (for testing)
 # -----------------------------
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
+    print(f"[DEBUG] Starting Flask app on port {port}", flush=True)
     app.run(host='0.0.0.0', port=port)
 
 
